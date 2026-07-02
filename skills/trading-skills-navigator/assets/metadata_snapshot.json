@@ -77,13 +77,18 @@
           "type": "market_data"
         },
         {
+          "id": "binance_spot_trading",
+          "requirement": "optional",
+          "type": "broker"
+        },
+        {
           "id": "user_input",
           "requirement": "optional",
           "type": "local_file"
         }
       ],
       "status": "beta",
-      "summary": "Event-driven crypto backtesting engine with realistic execution costs, protective exits, position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing.",
+      "summary": "Event-driven crypto backtesting engine with realistic execution costs, protective exits, position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing, plus a paper/live trading layer that reuses the same strategy code.",
       "timeframe": "research"
     },
     {

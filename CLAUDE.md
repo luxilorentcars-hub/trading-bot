@@ -223,7 +223,7 @@ The table below is **auto-generated** from `skills-index.yaml` by `scripts/gener
 | **Breadth Chart Analyst** | ❌ Not used | ❌ Not used | ❌ Not used | Chart screenshot input |
 | **Breakout Trade Planner** | ❌ Not used | ❌ Not used | ❌ Not used | Consumes VCP screener output; pure calculation + Alpaca order templates |
 | **CANSLIM Screener** | ✅ Required | ❌ Not used | ❌ Not used | US stock fundamentals via FMP |
-| **Crypto Backtest Engine** | ❌ Not used | ❌ Not used | ❌ Not used | OHLCV klines from the Binance public REST API (no key required); CSV and synthetic data also supported; Local OHLCV CSV files |
+| **Crypto Backtest Engine** | ❌ Not used | ❌ Not used | ❌ Not used | OHLCV klines from the Binance public REST API (no key required); CSV and synthetic data also supported; Real spot order placement via signed Binance REST; paper broker is the default, real orders are guarded behind explicit flags and API keys; Local OHLCV CSV files |
 | **Data Quality Checker** | ❌ Not used | ❌ Not used | ❌ Not used | Local markdown validation; works offline |
 | **Dividend Growth Pullback Screener** | ✅ Required | 🟡 Optional (Recommended) | ❌ Not used | Financial Modeling Prep API |
 | **Downtrend Duration Analyzer** | ❌ Not used | ❌ Not used | ❌ Not used | Duration analysis from market data; pure calculation |

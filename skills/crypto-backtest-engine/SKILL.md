@@ -1,6 +1,6 @@
 ---
 name: crypto-backtest-engine
-description: Event-driven crypto backtesting engine with realistic execution costs, protective exits, position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing. Use when backtesting crypto trading strategies on Binance OHLCV data, local CSV files, or synthetic data; when optimizing strategy parameters; or when stress-testing a strategy's robustness before live deployment. Complements backtest-expert (methodology) with an executable engine.
+description: Event-driven crypto backtesting engine with realistic execution costs, protective exits, position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing, plus a paper/live trading layer that reuses the same strategy code. Use when backtesting crypto trading strategies on Binance OHLCV data, local CSV files, or synthetic data; when optimizing strategy parameters; when stress-testing a strategy's robustness; or when paper-trading or live-trading a validated strategy through a broker. Complements backtest-expert (methodology) with an executable engine.
 ---
 
 # Crypto Backtest Engine
@@ -52,7 +52,10 @@ python3 run_backtest.py --csv data/btc_1h.csv --strategy sma_cross \
 | `cbe_optimizer.py` | Grid search + walk-forward analysis with walk-forward efficiency (OOS/IS) |
 | `cbe_monte_carlo.py` | Trade-bootstrap simulation: equity/drawdown percentile bands, P(loss), P(ruin) |
 | `cbe_report.py` | Plain-text report + JSON export |
-| `run_backtest.py` | CLI wiring everything together |
+| `run_backtest.py` | Backtest CLI wiring everything together |
+| `cbe_broker.py` | Broker interface + `PaperBroker` (simulated) + guarded `BinanceBroker` (real spot) |
+| `cbe_live.py` | `LiveTrader`: replays the strategy over a rolling window and reconciles the position toward the target |
+| `run_live.py` | Paper/live trading CLI (paper by default; real orders behind explicit guards) |
 
 ## Position sizing modes
 
@@ -79,13 +82,51 @@ using data up to bar *i* only), then add the class to `STRATEGY_REGISTRY`
 and a parameter grid to `DEFAULT_GRIDS`. The engine handles execution,
 costs, exits, and sizing — strategies stay pure signal logic.
 
+## Paper & live trading
+
+The live layer reuses the exact same `Strategy` classes as the backtest, so
+signals are identical to what you validated. On each poll the trader replays
+the strategy over a rolling window of **closed** candles and places a market
+order that reconciles the current position toward the target — the live
+analogue of the backtest's "fill at next bar's open".
+
+**Safety model — paper by default.** Real orders require *all* of
+`--broker binance --live --i-understand-live` plus `BINANCE_API_KEY` /
+`BINANCE_API_SECRET` in the environment. Missing any one → orders are
+simulated (paper) or dry-run (logged, never sent). Position size is capped
+at equity (no leverage) and by `--max-notional`; `--state` persists the last
+processed bar so a restart never re-trades a bar.
+
+```bash
+cd skills/crypto-backtest-engine/scripts
+
+# Paper trade against synthetic data (fully offline)
+python3 run_live.py --synthetic --strategy sma_cross --params '{"fast":20,"slow":100}'
+
+# Paper trade against live Binance prices, loop each bar, persist state
+python3 run_live.py --symbol BTCUSDT --interval 1h --strategy donchian_breakout \
+    --broker paper --capital 5000 --state state/btc.json --loop
+
+# REAL spot orders (long/flat only) — every guard must be explicit
+BINANCE_API_KEY=... BINANCE_API_SECRET=... python3 run_live.py \
+    --symbol BTCUSDT --interval 1h --strategy sma_cross \
+    --broker binance --live --i-understand-live \
+    --max-notional 200 --state state/btc.json --loop
+```
+
+Binance spot cannot short, so a SHORT target collapses to FLAT there; use the
+`PaperBroker` (or a futures adapter, not yet implemented) for short exposure.
+Always paper-trade a strategy that passed walk-forward before going live.
+
 ## Testing
 
 ```bash
 python3 -m pytest skills/crypto-backtest-engine/scripts/tests/ -v
 ```
 
-The test suite (99 tests) covers execution semantics (next-open fills,
+The test suite (135 tests) covers execution semantics (next-open fills,
 gap handling, stop-vs-TP priority), cost accounting, sizing caps, metric
 math against hand-computed values, optimizer stitching, Monte Carlo
-determinism, and a mocked Binance client — no network access required.
+determinism, paper-broker fills, live position reconciliation, restart-safe
+state, the real-order safety guards, and a mocked Binance client — no
+network access required.

@@ -12,7 +12,7 @@ generated: true
 # Crypto Backtest Engine
 {: .no_toc }
 
-Event-driven crypto backtesting engine with realistic execution costs, protective exits, position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing. Use when backtesting crypto trading strategies on Binance OHLCV data, local CSV files, or synthetic data; when optimizing strategy parameters; or when stress-testing a strategy's robustness before live deployment. Complements backtest-expert (methodology) with an executable engine.
+Event-driven crypto backtesting engine with realistic execution costs, protective exits, position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing, plus a paper/live trading layer that reuses the same strategy code. Use when backtesting crypto trading strategies on Binance OHLCV data, local CSV files, or synthetic data; when optimizing strategy parameters; when stress-testing a strategy's robustness; or when paper-trading or live-trading a validated strategy through a broker. Complements backtest-expert (methodology) with an executable engine.
 {: .fs-6 .fw-300 }
 
 <span class="badge badge-free">API不要</span>

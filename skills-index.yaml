@@ -95,7 +95,8 @@ skills:
   category: strategy-research
   status: beta
   summary: Event-driven crypto backtesting engine with realistic execution costs, protective exits,
-    position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing.
+    position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing, plus a
+    paper/live trading layer that reuses the same strategy code.
   timeframe: research
   difficulty: advanced
   integrations:
@@ -103,6 +104,10 @@ skills:
     type: market_data
     requirement: optional
     note: OHLCV klines from the Binance public REST API (no key required); CSV and synthetic data also supported
+  - id: binance_spot_trading
+    type: broker
+    requirement: optional
+    note: Real spot order placement via signed Binance REST; paper broker is the default, real orders are guarded behind explicit flags and API keys
   - id: user_input
     type: local_file
     requirement: optional
@@ -114,6 +119,7 @@ skills:
   - backtest_report
   - performance_metrics
   - trade_log
+  - live_orders
   workflows: []
 - id: data-quality-checker
   display_name: Data Quality Checker
