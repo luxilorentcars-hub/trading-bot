@@ -152,7 +152,7 @@ class BinanceBroker(Broker):
 
     supports_short = False
 
-    def __init__(
+    def __init__(  # nosec B107 - empty default = no credentials (paper/dry-run), not a secret
         self,
         api_key: str = "",
         api_secret: str = "",
