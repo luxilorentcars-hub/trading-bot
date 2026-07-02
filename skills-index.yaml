@@ -90,6 +90,31 @@ skills:
   - composite_scores
   workflows:
   - swing-opportunity-daily
+- id: crypto-backtest-engine
+  display_name: Crypto Backtest Engine
+  category: strategy-research
+  status: beta
+  summary: Event-driven crypto backtesting engine with realistic execution costs, protective exits,
+    position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing.
+  timeframe: research
+  difficulty: advanced
+  integrations:
+  - id: binance_public_api
+    type: market_data
+    requirement: optional
+    note: OHLCV klines from the Binance public REST API (no key required); CSV and synthetic data also supported
+  - id: user_input
+    type: local_file
+    requirement: optional
+    note: Local OHLCV CSV files
+  inputs:
+  - historical_ohlcv
+  - strategy_parameters
+  outputs:
+  - backtest_report
+  - performance_metrics
+  - trade_log
+  workflows: []
 - id: data-quality-checker
   display_name: Data Quality Checker
   category: meta

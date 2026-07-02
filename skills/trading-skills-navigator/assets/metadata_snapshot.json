@@ -66,6 +66,27 @@
       "timeframe": "weekly"
     },
     {
+      "category": "strategy-research",
+      "difficulty": "advanced",
+      "display_name": "Crypto Backtest Engine",
+      "id": "crypto-backtest-engine",
+      "integrations": [
+        {
+          "id": "binance_public_api",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
+          "id": "user_input",
+          "requirement": "optional",
+          "type": "local_file"
+        }
+      ],
+      "status": "beta",
+      "summary": "Event-driven crypto backtesting engine with realistic execution costs, protective exits, position sizing, grid search, walk-forward analysis, and Monte Carlo robustness testing.",
+      "timeframe": "research"
+    },
+    {
       "category": "meta",
       "difficulty": "beginner",
       "display_name": "Data Quality Checker",

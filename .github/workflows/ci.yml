@@ -54,6 +54,13 @@ jobs:
           --cov=skills/backtest-expert/scripts
           --cov-report=term-missing
 
+      - name: Test crypto-backtest-engine
+        run: >
+          python -m pytest skills/crypto-backtest-engine/scripts/tests/ -v
+          --cov=skills/crypto-backtest-engine/scripts
+          --cov-report=term-missing
+          --cov-append
+
       - name: Test data-quality-checker
         run: >
           python -m pytest skills/data-quality-checker/scripts/tests/ -v

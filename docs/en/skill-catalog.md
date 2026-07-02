@@ -266,5 +266,6 @@ A comprehensive catalog of all 61 Claude Trading Skills organized by category. B
 | Stockbee Setup Fluency Trainer | Optional | -- | -- |
 | Stockbee 20pct Study | Required | -- | -- |
 | Stockbee Exhaustion Hammer Screener | Required | -- | -- |
+| Crypto Backtest Engine | -- | -- | -- |
 
 "--" means not required. "Optional" means functionality is enhanced but the skill works without it.
