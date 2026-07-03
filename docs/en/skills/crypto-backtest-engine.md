@@ -36,7 +36,7 @@ Event-driven crypto backtesting engine with realistic execution costs, protectiv
 
 ## 2. Prerequisites
 
-- OHLCV klines from the Binance public REST API (no key required); CSV and synthetic data also supported; Real spot order placement via signed Binance REST; paper broker is the default, real orders are guarded behind explicit flags and API keys; Local OHLCV CSV files
+- OHLCV klines from the Binance public REST API (no key required); CSV and synthetic data also supported; Real spot order placement via signed Binance REST; paper broker is the default, real orders are guarded behind explicit flags and API keys; Public Polymarket CLOB order-book reads for YES/NO arbitrage scanning (no key; jurisdiction-dependent access); Local OHLCV CSV files
 - Python 3.9+ recommended
 
 ---
@@ -57,6 +57,7 @@ See the skill's SKILL.md for the complete workflow.
 
 **Scripts:**
 
+- `skills/crypto-backtest-engine/scripts/cbe_arbitrage.py`
 - `skills/crypto-backtest-engine/scripts/cbe_broker.py`
 - `skills/crypto-backtest-engine/scripts/cbe_data.py`
 - `skills/crypto-backtest-engine/scripts/cbe_engine.py`
@@ -67,5 +68,6 @@ See the skill's SKILL.md for the complete workflow.
 - `skills/crypto-backtest-engine/scripts/cbe_optimizer.py`
 - `skills/crypto-backtest-engine/scripts/cbe_report.py`
 - `skills/crypto-backtest-engine/scripts/cbe_strategies.py`
+- `skills/crypto-backtest-engine/scripts/run_arbitrage.py`
 - `skills/crypto-backtest-engine/scripts/run_backtest.py`
 - `skills/crypto-backtest-engine/scripts/run_live.py`

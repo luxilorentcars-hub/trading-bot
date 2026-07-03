@@ -56,6 +56,8 @@ python3 run_backtest.py --csv data/btc_1h.csv --strategy sma_cross \
 | `cbe_broker.py` | Broker interface + `PaperBroker` (simulated) + guarded `BinanceBroker` (real spot) |
 | `cbe_live.py` | `LiveTrader`: replays the strategy over a rolling window and reconciles the position toward the target |
 | `run_live.py` | Paper/live trading CLI (paper by default; real orders behind explicit guards) |
+| `cbe_arbitrage.py` | Market-neutral detectors: triangular arbitrage (Binance) + YES/NO arbitrage (Polymarket-style), depth-capped sizing, paper ledger |
+| `run_arbitrage.py` | Arbitrage scanner CLI (paper only — never places real orders) |
 
 ## Position sizing modes
 
@@ -118,15 +120,50 @@ Binance spot cannot short, so a SHORT target collapses to FLAT there; use the
 `PaperBroker` (or a futures adapter, not yet implemented) for short exposure.
 Always paper-trade a strategy that passed walk-forward before going live.
 
+## Market-neutral arbitrage scanner (paper only)
+
+`cbe_arbitrage.py` detects two classes of market-neutral edges and
+paper-simulates them — it **never places real orders**:
+
+- **Triangular arbitrage** (spot): for a triangle X/QUOTE, Y/X, Y/QUOTE the
+  round-trip product of executable prices, net of taker fees on all three
+  legs, should be 1.0. Both directions are evaluated; sizing is capped by
+  the thinnest top-of-book leg.
+- **YES/NO arbitrage** (prediction markets, Polymarket-style): buying 1 YES
+  + 1 NO pays exactly $1 at resolution, so `ask(YES) + ask(NO) < $1` locks
+  in the difference regardless of outcome.
+
+```bash
+cd skills/crypto-backtest-engine/scripts
+
+# Offline demo with synthetic books (deterministic, seeded)
+python3 run_arbitrage.py --synthetic --polls 20
+
+# Live Binance books, continuous 5s scan, paper-fill every hit >= 3 bps
+python3 run_arbitrage.py --triangle BTCUSDT,ETHBTC,ETHUSDT \
+    --loop --poll-seconds 5 --min-edge-bps 3 --capital 500
+
+# Polymarket YES/NO check (public book endpoint; lawful-access regions only)
+python3 run_arbitrage.py --polymarket --yes-token <id> --no-token <id>
+```
+
+Honest caveats: real triangular execution needs websocket books and
+near-atomic legs (a partial fill breaks the loop and leaves inventory
+risk); top-of-book edges at retail latency are usually captured by faster
+participants; Polymarket carries oracle-resolution risk and jurisdiction
+restrictions. Treat scanner output as a measurement of available edge, not
+a promise of profit.
+
 ## Testing
 
 ```bash
 python3 -m pytest skills/crypto-backtest-engine/scripts/tests/ -v
 ```
 
-The test suite (135 tests) covers execution semantics (next-open fills,
+The test suite (156 tests) covers execution semantics (next-open fills,
 gap handling, stop-vs-TP priority), cost accounting, sizing caps, metric
 math against hand-computed values, optimizer stitching, Monte Carlo
 determinism, paper-broker fills, live position reconciliation, restart-safe
-state, the real-order safety guards, and a mocked Binance client — no
+state, the real-order safety guards, triangular and YES/NO arbitrage math
+against hand-computed edges, and mocked Binance/Polymarket clients — no
 network access required.

@@ -82,6 +82,11 @@
           "type": "broker"
         },
         {
+          "id": "polymarket_clob_api",
+          "requirement": "optional",
+          "type": "market_data"
+        },
+        {
           "id": "user_input",
           "requirement": "optional",
           "type": "local_file"
