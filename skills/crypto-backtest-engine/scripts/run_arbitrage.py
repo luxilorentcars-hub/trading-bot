@@ -26,14 +26,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from cbe_arb_dashboard import write_dashboard
 from cbe_arbitrage import (
+    DEFAULT_ALT_UNIVERSE,
     BookTop,
     PaperArbLedger,
     Triangle,
+    build_triangles,
     fetch_binance_book_tops,
     fetch_polymarket_book_top,
     format_opportunity,
     scan_triangles,
+    universe_symbols,
     yes_no_edge,
 )
 
@@ -52,6 +56,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--synthetic", action="store_true", help="Offline demo with synthetic books")
     p.add_argument("--seed", type=int, default=11, help="Seed for synthetic books")
 
+    # Universe mode: auto-build triangles from alts bridged through BTC/ETH/BNB.
+    p.add_argument(
+        "--assets",
+        default=None,
+        help="Comma-separated alt symbols to auto-triangulate (e.g. SOL,XRP,ADA); "
+        "'default' uses a built-in liquid-alt universe",
+    )
+    p.add_argument("--bridges", default="BTC,ETH", help="Bridge assets (default BTC,ETH)")
+    p.add_argument("--quote", default="USDT", help="Quote/accounting currency (default USDT)")
+
+    p.add_argument("--dashboard", default=None, help="Write a live HTML dashboard to this path")
+
     p.add_argument("--polymarket", action="store_true", help="Scan a Polymarket YES/NO pair")
     p.add_argument("--yes-token", default=None, help="Polymarket CLOB token id for YES")
     p.add_argument("--no-token", default=None, help="Polymarket CLOB token id for NO")
@@ -67,9 +83,21 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def parse_triangles(raw: list | None) -> list:
+def parse_triangles(args) -> list:
+    """Resolve the triangle set: explicit --triangle, --assets universe, or default."""
+    if args.assets is not None:
+        alts = (
+            DEFAULT_ALT_UNIVERSE
+            if args.assets == "default"
+            else [s.strip().upper() for s in args.assets.split(",") if s.strip()]
+        )
+        bridges = [s.strip().upper() for s in args.bridges.split(",") if s.strip()]
+        triangles = build_triangles(alts, bridges, args.quote)
+        if not triangles:
+            raise SystemExit("--assets produced no valid triangles")
+        return triangles
     triangles = []
-    for spec in raw or [DEFAULT_TRIANGLE]:
+    for spec in args.triangle or [DEFAULT_TRIANGLE]:
         parts = [s.strip().upper() for s in spec.split(",")]
         if len(parts) != 3:
             raise SystemExit(f"--triangle must have 3 symbols, got: {spec}")
@@ -106,8 +134,7 @@ def scan_once(args, triangles, ledger, rng, poll_index: int) -> int:
         for tri in triangles:
             books.update(synthetic_books(tri, rng))
     else:
-        symbols = sorted({s for tri in triangles for s in tri.symbols()})
-        books = fetch_binance_book_tops(symbols)
+        books = fetch_binance_book_tops(universe_symbols(triangles))
     hits = scan_triangles(triangles, books, fee_bps=args.fee_bps, min_edge_bps=args.min_edge_bps)
     for opp in hits:
         print(format_opportunity(opp))
@@ -137,12 +164,17 @@ def main(argv: list | None = None) -> int:
         scan_polymarket(args)
         return 0
 
-    triangles = parse_triangles(args.triangle)
+    triangles = parse_triangles(args)
+    print(f"# scanning {len(triangles)} triangle(s)")
     ledger = PaperArbLedger(capital_per_trade=args.capital)
     rng = random.Random(args.seed)
+    timeline: list = []
     poll = 0
     while True:
         scan_once(args, triangles, ledger, rng, poll)
+        timeline.append((poll, ledger.realized_profit))
+        if args.dashboard:
+            _write_dashboard(args, triangles, ledger, timeline, poll)
         poll += 1
         if args.loop:
             time.sleep(args.poll_seconds)
@@ -153,7 +185,22 @@ def main(argv: list | None = None) -> int:
             f"# paper summary: {len(ledger.executions)} executions, "
             f"total profit {ledger.realized_profit:+.4f} on {args.capital:.0f}/trade"
         )
+    if args.dashboard:
+        print(f"# dashboard written to {args.dashboard} — open it in your browser")
     return 0
+
+
+def _write_dashboard(args, triangles, ledger, timeline, poll) -> None:
+    meta = {
+        "title": "Crypto Arbitrage Scanner",
+        "subtitle": f"{len(triangles)} triangles | bridges {args.bridges} | quote {args.quote} "
+        f"| fee {args.fee_bps} bps/leg | min edge {args.min_edge_bps} bps",
+        "polls": poll + 1,
+        "refresh_seconds": args.poll_seconds if args.loop else None,
+        "top": 15,
+        "recent": 15,
+    }
+    write_dashboard(args.dashboard, timeline, ledger.executions, ledger.realized_profit, meta)
 
 
 if __name__ == "__main__":

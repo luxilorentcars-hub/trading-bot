@@ -57,6 +57,7 @@ See the skill's SKILL.md for the complete workflow.
 
 **Scripts:**
 
+- `skills/crypto-backtest-engine/scripts/cbe_arb_dashboard.py`
 - `skills/crypto-backtest-engine/scripts/cbe_arbitrage.py`
 - `skills/crypto-backtest-engine/scripts/cbe_broker.py`
 - `skills/crypto-backtest-engine/scripts/cbe_data.py`

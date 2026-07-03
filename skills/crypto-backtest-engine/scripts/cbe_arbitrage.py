@@ -82,6 +82,56 @@ class Triangle:
         return (self.leg_a, self.leg_b, self.leg_c)
 
 
+# A pragmatic default universe of liquid alts to bridge through BTC/ETH.
+# Alt triangles misprice more often than BTC/ETH but have thinner books —
+# the scanner sizes by depth, so tiny opportunities surface as tiny sizes.
+DEFAULT_ALT_UNIVERSE = [
+    "SOL",
+    "XRP",
+    "ADA",
+    "DOGE",
+    "AVAX",
+    "LINK",
+    "DOT",
+    "MATIC",
+    "LTC",
+    "TRX",
+    "ATOM",
+    "NEAR",
+    "APT",
+    "ARB",
+]
+DEFAULT_BRIDGES = ["BTC", "ETH", "BNB"]
+
+
+def build_triangles(alts: list[str], bridges: list[str], quote: str = "USDT") -> list[Triangle]:
+    """Generate triangles that bridge each alt through each bridge vs quote.
+
+    For alt Y, bridge X and quote Q, the loop is Q -> X -> Y -> Q with legs
+    X/Q (leg_a), Y/X (leg_b), Y/Q (leg_c). Degenerate cases (alt == bridge)
+    are skipped. Returns de-duplicated triangles.
+    """
+    seen: set = set()
+    triangles: list[Triangle] = []
+    q = quote.upper()
+    for bridge in bridges:
+        b = bridge.upper()
+        for alt in alts:
+            a = alt.upper()
+            if a == b or a == q or b == q:
+                continue
+            tri = Triangle(f"{b}{q}", f"{a}{b}", f"{a}{q}")
+            if tri.symbols() not in seen:
+                seen.add(tri.symbols())
+                triangles.append(tri)
+    return triangles
+
+
+def universe_symbols(triangles: list[Triangle]) -> list[str]:
+    """Unique symbols needed to price a set of triangles (sorted)."""
+    return sorted({s for tri in triangles for s in tri.symbols()})
+
+
 def triangular_edges(
     triangle: Triangle,
     book_a: BookTop,

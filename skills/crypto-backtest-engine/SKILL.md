@@ -56,7 +56,8 @@ python3 run_backtest.py --csv data/btc_1h.csv --strategy sma_cross \
 | `cbe_broker.py` | Broker interface + `PaperBroker` (simulated) + guarded `BinanceBroker` (real spot) |
 | `cbe_live.py` | `LiveTrader`: replays the strategy over a rolling window and reconciles the position toward the target |
 | `run_live.py` | Paper/live trading CLI (paper by default; real orders behind explicit guards) |
-| `cbe_arbitrage.py` | Market-neutral detectors: triangular arbitrage (Binance) + YES/NO arbitrage (Polymarket-style), depth-capped sizing, paper ledger |
+| `cbe_arbitrage.py` | Market-neutral detectors: triangular arbitrage (Binance) + YES/NO arbitrage (Polymarket-style), depth-capped sizing, paper ledger, multi-triangle universe builder |
+| `cbe_arb_dashboard.py` | Self-contained HTML dashboard (inline-SVG equity curve, triangle leaderboard, recent opportunities) |
 | `run_arbitrage.py` | Arbitrage scanner CLI (paper only — never places real orders) |
 
 ## Position sizing modes
@@ -143,9 +144,22 @@ python3 run_arbitrage.py --synthetic --polls 20
 python3 run_arbitrage.py --triangle BTCUSDT,ETHBTC,ETHUSDT \
     --loop --poll-seconds 5 --min-edge-bps 3 --capital 500
 
+# Universe mode: auto-build alt triangles bridged through BTC/ETH and rank
+# where edges actually appear, with a live self-refreshing HTML dashboard
+python3 run_arbitrage.py --assets default --bridges BTC,ETH \
+    --loop --poll-seconds 5 --min-edge-bps 3 --dashboard reports/arb.html
+
 # Polymarket YES/NO check (public book endpoint; lawful-access regions only)
 python3 run_arbitrage.py --polymarket --yes-token <id> --no-token <id>
 ```
+
+Universe mode (`--assets SOL,XRP,...` or `--assets default`) builds every
+`bridge/quote`, `alt/bridge`, `alt/quote` triangle and scans them together.
+Alt triangles misprice more often than BTC/ETH but have thinner books, so
+edges surface as small `max size` values — the depth-capped sizing keeps the
+paper P&L honest. `--dashboard PATH` writes a self-contained HTML page
+(equity curve + triangle leaderboard + recent fills); under `--loop` it
+rewrites each poll and self-refreshes in the browser.
 
 Honest caveats: real triangular execution needs websocket books and
 near-atomic legs (a partial fill breaks the loop and leaves inventory
@@ -160,10 +174,10 @@ a promise of profit.
 python3 -m pytest skills/crypto-backtest-engine/scripts/tests/ -v
 ```
 
-The test suite (156 tests) covers execution semantics (next-open fills,
+The test suite (175 tests) covers execution semantics (next-open fills,
 gap handling, stop-vs-TP priority), cost accounting, sizing caps, metric
 math against hand-computed values, optimizer stitching, Monte Carlo
 determinism, paper-broker fills, live position reconciliation, restart-safe
 state, the real-order safety guards, triangular and YES/NO arbitrage math
-against hand-computed edges, and mocked Binance/Polymarket clients — no
-network access required.
+against hand-computed edges, triangle-universe construction, HTML dashboard
+rendering, and mocked Binance/Polymarket clients — no network access required.
